@@ -32,7 +32,7 @@ class Skiplagged():
     # Login
     
     def login_with_google(self, username, password):
-        print time.time(), "called login_with_google"     
+        print(time.time(), "called login_with_google")
         google_auth = Google()
         auth_provider = google_auth.get_auth_provider()
         access_token = google_auth.get_access_token(username, password)
@@ -41,7 +41,7 @@ class Skiplagged():
         return self._update_login(auth_provider, access_token, username, password)
     
     def login_with_pokemon_trainer(self, username, password):
-        print time.time(), "called login_with_pokemon_trainer" 
+        print(time.time(), "called login_with_pokemon_trainer")
         ptc_auth = PokemonTrainerClub()
         auth_provider = ptc_auth.get_auth_provider()
         access_token = ptc_auth.get_access_token(username, password)
@@ -84,19 +84,27 @@ class Skiplagged():
         
         while 1:
             try:
-                if is_skiplagged_api:
+                if is_skiplagged_api: #or endpoint == "https://pgorelease.nianticlabs.com/plfe/rpc"):
                     r = requests_session.post(endpoint, data, verify=False)
-                    return json.loads(r.content)
+                    #print("Here's R content: "+r.content.decode("utf-8"))
+                    #print("Here's Endpoint: "+endpoint)
+
+                    return json.loads(r.content.decode("utf-8"))
                 else:
                     r = requests_session.post(endpoint, base64.b64decode(data), verify=False)
-                    if 'Server Error' in r.content: raise Exception('invalid niantic server response')
+                    
+                    #if 'Server Error' in r.content: raise Exception('invalid niantic server response')
+                    #print("Here's R content: "+base64.b64encode(r.content).decode("utf-8"))
+                    #print("Here's Endpoint: "+endpoint)
+
+                    
                     return base64.b64encode(r.content)  
             except Exception:
-                print "post exception", traceback.format_exc()
+                print("post exception", traceback.format_exc())
                 time.sleep(1)
     
     def get_specific_api_endpoint(self):
-        print time.time(), "called get_specific_api_endpoint"
+        print(time.time(), "called get_specific_api_endpoint")
         if not self.is_logged_in(): raise Exception('need to log in first')
         
         response = self._call(self.SKIPLAGGED_API, {
@@ -118,7 +126,7 @@ class Skiplagged():
         return self.SPECIFIC_API
         
     def get_profile(self):
-        print time.time(), "called get_profile" 
+        print(time.time(), "called get_profile")
         if not self.SPECIFIC_API: self.get_specific_api_endpoint()
         
         response = self._call(self.SKIPLAGGED_API, {
@@ -147,7 +155,7 @@ class Skiplagged():
     # Generates a realistic path to traverse the bounds and find spawned pokemon
     # Processed sequentially and with delay to minimize chance of getting account banned
     def find_pokemon(self, bounds, step_size=0.002):
-        print time.time(), "called find_pokemon" 
+        print(time.time(), "called find_pokemon")
         if not self.PROFILE_RAW: self.get_profile()
         
         bounds = '%f,%f,%f,%f' % (bounds[0] + bounds[1])
@@ -162,12 +170,12 @@ class Skiplagged():
         if not 'requests' in response: raise Exception('failed to get requests')
                         
         for request in response['requests']:
-            print time.time(), "moving player"
+            print(time.time(), "moving player")
             pokemon_data = self._call(self.SPECIFIC_API, request['pdata'])
             response = self._call(self.SKIPLAGGED_API, {'pdata': pokemon_data})
             
             num_pokemon_found = len(response['pokemons'])
-            if num_pokemon_found > 0: print time.time(), "found %d pokemon" % (num_pokemon_found)
+            if num_pokemon_found > 0: print(time.time(), "found %d pokemon" % (num_pokemon_found))
             for pokemon in response['pokemons']: yield Pokemon(pokemon )
             
             time.sleep(.5)

@@ -25,12 +25,13 @@ class PokemonTrainerClub(object):
         if r is None: raise Exception('failed to get login_url')
         
         # Response should be in json
-        try: login_data = json.loads(r.content)
+        try: login_data = json.loads(r.content.decode("utf-8"))
         except Exception as e:
-            print 'response from get login_url unexpected, retrying'
+            print(e)
             time.sleep(1)
             return self.login_ptc(username, password)
         
+        print('Sucess: '+str(login_data))
         # Attempt to log in
         data = {
             'lt': login_data['lt'],
@@ -45,7 +46,7 @@ class PokemonTrainerClub(object):
         ticket = None
         try: ticket = re.sub('.*ticket=', '', r1.history[0].headers['Location'])
         except: raise Exception('failed to get ticket, ' + r1.json().get('errors', ''))
-        
+       
         # Exchange the ticket for an access_token
         data1 = {
             'client_id': 'mobile-app_pokemon-go',
@@ -54,8 +55,9 @@ class PokemonTrainerClub(object):
             'grant_type': 'refresh_token',
             'code': ticket,
         }
-        r2 = requests_session.post(LOGIN_OAUTH, data=data1)
-        access_token = re.sub('&expires.*', '', r2.content)
-        access_token = re.sub('.*access_token=', '', access_token)
         
+        r2 = requests_session.post(LOGIN_OAUTH, data=data1)
+        access_token = re.sub('&expires.*', '', r2.content.decode("utf-8"))
+        access_token = re.sub('.*access_token=', '', access_token)
+
         return access_token
